@@ -84,3 +84,16 @@ export function patchProblem(patch: Partial<Application>): string | null {
   if (patch.pin != null && !/^\d{6}$/.test(patch.pin)) return "Pin code must be exactly 6 digits";
   return null;
 }
+
+export const COPILOT_SCOPE_REPLY = "I'm the Expansion Copilot, so I only work with the applications loaded in this dashboard: explaining a decision, listing applications by status, and recalculating when you give me new facts about an applicant. 🍦 Candidate questions about how to apply or fill in the form are answered by the Application Copilot on the public site.";
+
+/** In scope = about loaded applications, their decisions, territories, scores or a change to one of them. */
+const COPILOT_IN = /app[\s_-]*0*\d+|applicants?|applications?|candidates?|status|on hold|waitlist|reject|accept|approv|decision|score|rank|territor|slot|payback|bottleneck|cannibal|contention|why is|why was|summar|how many/i;
+/** Things a candidate would ask: these belong to the Application Copilot. */
+const CANDIDATE_STYLE = /\bhow (do|can|should|would) i\b|\bcan i (apply|open|start|join)\b|\bmy (application|budget|shop|score|chances|status|form)\b|\bi (want|would like|am planning|plan) to (open|apply|start|join)\b|\bwhat (is|are) the (minimum|starting|required)\b/i;
+export function inCopilotScope(q: string): boolean {
+  const t = q.trim();
+  if (!t) return true;
+  if (CANDIDATE_STYLE.test(t) && !/app[\s_-]*0*\d+/i.test(t)) return false;
+  return COPILOT_IN.test(t);
+}

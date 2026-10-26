@@ -31,7 +31,7 @@ export default function ChatbotWidget({
 }: { context?: ChatContext; onApplyPreset?: (patch: Record<string, string>) => void; copilot?: CopilotConfig; autoSend?: { text: string; n: number } | null }) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([
-    { role: "bot", text: copilot?.greeting ?? "Hi! I'm your SnowFlakes concierge 🍦 Ask me anything about investment, shop requirements or training — I'll help you put together a strong application." },
+    { role: "bot", text: copilot?.greeting ?? "Hi! I'm the SnowFlakes Application Copilot 🍦 Ask me about investment, shop requirements, pin codes or training, and I'll help you put together a strong application." },
   ]);
   const [pills, setPills] = useState<string[]>(copilot?.pills ?? INITIAL);
   const [input, setInput] = useState("");
@@ -81,19 +81,19 @@ export default function ChatbotWidget({
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)} aria-label={copilot ? "Open expansion copilot" : "Open onboarding concierge"}
+          onClick={() => setOpen(true)} aria-label={copilot ? "Open expansion copilot" : "Open Application Copilot"}
           className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-xl transition hover:bg-brand-700"
         >
           <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400" /></span>
-          <Bot size={20} /> <span className="text-left leading-tight">{copilot?.triggerLabel ?? "Need help with your application?"}<span className="block text-[11px] font-normal text-brand-100">{copilot?.triggerSub ?? "Ask our concierge"}</span></span>
+          <Bot size={20} /> <span className="text-left leading-tight">{copilot?.triggerLabel ?? "Need help with your application?"}<span className="block text-[11px] font-normal text-brand-100">{copilot?.triggerSub ?? "Ask our Application Copilot"}</span></span>
         </button>
       )}
 
       {open && (
-        <div className="fixed inset-x-3 bottom-3 z-40 flex h-[34rem] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[24rem]" role="dialog" aria-label={copilot?.title ?? "SnowFlakes concierge"}>
+        <div className="fixed inset-x-3 bottom-3 z-40 flex h-[34rem] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:inset-x-auto sm:bottom-5 sm:right-5 sm:w-[24rem]" role="dialog" aria-label={copilot?.title ?? "SnowFlakes Application Copilot"}>
           <div className="flex items-center gap-2 bg-brand-600 px-4 py-3 text-white">
             <Bot size={20} />
-            <div className="flex-1"><p className="font-semibold leading-tight">{copilot?.title ?? "SnowFlakes Concierge"}</p><p className="text-xs text-brand-100">{copilot?.subtitle ?? (context?.form ? "Aware of your draft application" : "Here to help you get started")}</p></div>
+            <div className="flex-1"><p className="font-semibold leading-tight">{copilot?.title ?? "SnowFlakes Application Copilot"}</p><p className="text-xs text-brand-100">{copilot?.subtitle ?? (context?.form ? "Aware of your draft application" : "Here to help you get started")}</p></div>
             <button onClick={() => setOpen(false)} aria-label="Close chat" className="rounded p-1 hover:bg-white/20"><X size={18} /></button>
           </div>
 

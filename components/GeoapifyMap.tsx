@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Circle, MapContainer, Marker, TileLayer, Tooltip, useMap } from "react-leaflet";
@@ -7,19 +7,36 @@ import { fallbackCoords, type LatLng } from "@/lib/geo";
 import type { Store } from "@/lib/types";
 import type { MapApplicant } from "./FranchiseMap";
 
-const KEY = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY!;
+const KEY = process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY || "";
 const RADIUS_M = 5000;
 const cache = new Map<string, LatLng>();
 
-/** Geocode a 6-digit pin code with Geoapify (cached); falls back to approximate coordinates if the lookup fails. */
+let keyless = !KEY; // flips to true when Geoapify rejects us, so the map still works
+let lastNominatim = 0;
+
+/** Geocode a 6-digit pin code (cached). Geoapify when a working key exists, otherwise OpenStreetMap Nominatim (no key, 1 request/second);
+ *  if both fail, approximate coordinates for the city are used. */
 async function geocodePin(pin: string, city: string): Promise<LatLng> {
   const hit = cache.get(pin);
   if (hit) return hit;
   try {
-    const res = await fetch(`https://api.geoapify.com/v1/geocode/search?postcode=${pin}&country=India&limit=1&format=json&apiKey=${KEY}`);
-    const j = await res.json();
-    const r = j.results?.[0];
-    if (r && typeof r.lat === "number") { const ll = { lat: r.lat, lng: r.lon }; cache.set(pin, ll); return ll; }
+    if (!keyless) {
+      const res = await fetch(`https://api.geoapify.com/v1/geocode/search?postcode=${pin}&country=India&limit=1&format=json&apiKey=${KEY}`);
+      if (res.status === 401 || res.status === 403) keyless = true;
+      else {
+        const j = await res.json();
+        const r = j.results?.[0];
+        if (r && typeof r.lat === "number") { const ll = { lat: r.lat, lng: r.lon }; cache.set(pin, ll); return ll; }
+      }
+    }
+    if (keyless) {
+      const wait = Math.max(0, lastNominatim + 1100 - Date.now());
+      lastNominatim = Date.now() + wait;
+      if (wait) await new Promise((r) => setTimeout(r, wait));
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${pin}&country=India&format=jsonv2&limit=1`, { headers: { Accept: "application/json" } });
+      const j = (await res.json()) as { lat?: string; lon?: string }[];
+      if (j[0]?.lat) { const ll = { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon!) }; cache.set(pin, ll); return ll; }
+    }
   } catch { /* fall through */ }
   const ll = fallbackCoords(pin, city);
   cache.set(pin, ll);
@@ -39,6 +56,8 @@ function Recenter({ center, zoom }: { center: LatLng; zoom: number }) {
 
 export default function GeoapifyMap({ stores, applicant, height = 380 }: { stores: Store[]; applicant?: MapApplicant; height?: number }) {
   const [coords, setCoords] = useState<Record<string, LatLng>>({});
+  const [osm, setOsm] = useState(!KEY);
+  const errors = useRef(0);
   const items = useMemo(
     () => [...stores.map((s) => ({ pin: s.pin, city: s.city })), ...(applicant && /^\d{6}$/.test(applicant.pin) ? [{ pin: applicant.pin, city: applicant.city }] : [])],
     [stores, applicant],
@@ -64,11 +83,17 @@ export default function GeoapifyMap({ stores, applicant, height = 380 }: { store
     <div className="space-y-2">
       <div className="overflow-hidden rounded-xl border border-slate-200" style={{ height }}>
         <MapContainer center={[center.lat, center.lng]} zoom={zoom} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-          <TileLayer
-            url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${KEY}`}
-            attribution='Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Geoapify</a> | © <a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
-            maxZoom={18}
-          />
+          {osm ? (
+            <TileLayer key="osm" url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors' maxZoom={19} />
+          ) : (
+            <TileLayer
+              key="geoapify"
+              url={`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${KEY}`}
+              attribution='Powered by <a href="https://www.geoapify.com/" target="_blank" rel="noreferrer">Geoapify</a> | © <a href="https://www.openmaptiles.org/" target="_blank" rel="noreferrer">OpenMapTiles</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
+              maxZoom={18}
+              eventHandlers={{ tileerror: () => { errors.current += 1; if (errors.current >= 3) { keyless = true; setOsm(true); } } }}
+            />
+          )}
           <Recenter center={center} zoom={zoom} />
           {stores.map((s) => {
             const p = at(s.pin, s.city);

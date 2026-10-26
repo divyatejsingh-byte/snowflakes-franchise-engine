@@ -94,5 +94,13 @@ if (answerQuery("Why is APP-999 on hold?", res).kind !== "help") fail.push("unkn
 if (/zzz/.test(answerQuery("What's the capital of France?", res).text)) fail.push("off-topic");
 if (answerQuery("What's the capital of France?", res).kind !== "help") fail.push("off-topic admin question should get the polite decline");
 
+// 6. the two copilots keep to their own scope
+import { isReviewerQuestion } from "../lib/guardrails";
+import { inCopilotScope } from "../lib/explain";
+for (const q of ["Why is APP-007 on hold?", "Which applications are waitlisted?", "Who got accepted in Mysuru?", "Tell me about the other applicants", "Show me the dashboard decisions"]) if (!isReviewerQuestion(q)) fail.push(`Application Copilot should refuse reviewer question: ${q}`);
+for (const q of ["What is the minimum investment?", "Can I apply without a shop?", "How is my score calculated?", "How does training work?"]) if (isReviewerQuestion(q)) fail.push(`Application Copilot wrongly refused candidate question: ${q}`);
+for (const q of ["Why is APP-007 on hold?", "Which applications are on hold?", "APP-012 has now found a ground-floor space of 450 sq ft", "How many applicants are waitlisted?", "Why was Divya rejected?"]) if (!inCopilotScope(q)) fail.push(`Expansion Copilot should answer: ${q}`);
+for (const q of ["How do I apply for a franchise?", "Can I open a store in Mysuru?", "What is the minimum investment?", "I want to open a parlour", "Tell me a joke", "What is the weather?"]) if (inCopilotScope(q)) fail.push(`Expansion Copilot should decline: ${q}`);
+
 if (fail.length) { console.error("FAIL:\n" + fail.join("\n")); process.exit(1); }
 console.log(`ALL GUARDRAIL CHECKS PASSED (${ATTACKS.length} attacks blocked, ${BENIGN.length} benign allowed, ${OFFTOPIC.length} off-topic declined)`);

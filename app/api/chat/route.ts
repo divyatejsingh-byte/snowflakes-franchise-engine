@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isOffTopic, respond, type ChatContext } from "@/lib/chatbot";
 import { respondWithLlm, type Catalog, type ChatTurn } from "@/lib/chatLlm";
-import { INJECTION_REPLY, NO_INFO_REPLY, RATE_LIMIT_REPLY, cleanText, globallyLimited, isInjection, normalizeForGuard, rateLimited } from "@/lib/guardrails";
+import { INJECTION_REPLY, NO_INFO_REPLY, RATE_LIMIT_REPLY, REVIEWER_SCOPE_REPLY, cleanText, globallyLimited, isInjection, isReviewerQuestion, normalizeForGuard, rateLimited } from "@/lib/guardrails";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     if (rateLimited(ip) || globallyLimited()) return NextResponse.json({ reply: RATE_LIMIT_REPLY, actions: [], suggestions: [], source: "guardrail" }, { status: 200 });
     if (isInjection(message)) return NextResponse.json({ reply: INJECTION_REPLY, actions: [], suggestions: [], source: "guardrail" });
 
+    if (isReviewerQuestion(message)) return NextResponse.json({ reply: REVIEWER_SCOPE_REPLY, actions: [], suggestions: [], source: "guardrail" });
     if (isOffTopic(message)) return NextResponse.json({ ...respond(message, ctx), source: "rules" }); // never spend an LLM call on off-topic questions
 
     // history comes from the browser, so a forged "assistant" turn could carry instructions: re-check every turn and cap lengths

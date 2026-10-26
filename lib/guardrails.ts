@@ -94,3 +94,16 @@ export function sanitizeOutput(text: string): string | null {
     .slice(0, 1200);
   return clean.length >= 2 ? clean : null;
 }
+
+export const REVIEWER_SCOPE_REPLY = "I'm the Application Copilot, so I can only help with your own application and the SnowFlakes franchise process. 🍦 Questions about other applicants or how the review team is deciding are handled by the SnowFlakes expansion team, not by me. Is there something about your own application I can help with?";
+
+/** Questions that belong to the Expansion Copilot (reviewer side): other applicants, application IDs, status lists, the dashboard. */
+const REVIEWER = new RegExp([
+  String.raw`\bapp[\s_-]*0*\d+\b`,
+  String.raw`\b(other|all|any|every|those|these|the) (applicants?|applications|candidates|partners)\b`,
+  String.raw`\bwhich (applicants?|applications|candidates)\b`,
+  String.raw`\b(applicants?|applications|candidates) (are|is|were|got|who) (on hold|waitlisted|accepted|rejected|selected|approved)\b`,
+  String.raw`\bwho (got|was|is|were|has been) (accepted|rejected|selected|approved|waitlisted|shortlisted)\b`,
+  String.raw`\b(dashboard|admin|reviewer|expansion copilot|human decision|audit (log|trail)|territory (ranking|contention))\b`,
+].join("|"), "i");
+export const isReviewerQuestion = (message: string) => REVIEWER.test(normalizeForGuard(message));

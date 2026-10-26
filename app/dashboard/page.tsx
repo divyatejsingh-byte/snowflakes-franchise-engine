@@ -17,7 +17,7 @@ import { findContests } from "@/lib/contention";
 import FranchiseMap from "@/components/FranchiseMap";
 import { Delta, StatusBadge } from "@/components/ui";
 import { simulate, summarize, type Delta as DeltaT } from "@/lib/engine";
-import { answerQuery, parseMutation, patchProblem, type Answer } from "@/lib/explain";
+import { COPILOT_SCOPE_REPLY, answerQuery, inCopilotScope, parseMutation, patchProblem, type Answer } from "@/lib/explain";
 import { isInjection } from "@/lib/guardrails";
 import { parseWorkbook } from "@/lib/parser";
 import { useResults, useStore } from "@/lib/store";
@@ -74,6 +74,7 @@ export default function Dashboard() {
           pills: ["Which applications are on hold?", "Which applications are waitlisted?", "Which applications are accepted?"],
           answer: (q) => {
             if (isInjection(q)) return { reply: "I can only help with the applications loaded here: explaining decisions, listing statuses, or recalculating a change you give me. I can't change how I work. 🍦" };
+            if (!inCopilotScope(q)) return { reply: COPILOT_SCOPE_REPLY };
             const mut = parseMutation(q);
             if (mut) {
               const problem = patchProblem(mut.patch);

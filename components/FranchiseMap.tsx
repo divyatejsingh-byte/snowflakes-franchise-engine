@@ -23,8 +23,8 @@ const GeoapifyMap = dynamic(() => import("./GeoapifyMap"), { ssr: false, loading
 const RADIUS_M = 5000;
 
 export default function FranchiseMap(props: Props) {
-  if (GEOAPIFY) return <GeoapifyMap {...props} />; // preferred provider
-  return KEY ? <GoogleView {...props} apiKey={KEY} /> : <SchematicView {...props} />;
+  if (KEY && !GEOAPIFY) return <GoogleView {...props} apiKey={KEY} />;
+  return <GeoapifyMap {...props} />; // Geoapify when its key works, otherwise keyless OpenStreetMap: a real map either way
 }
 
 /* ---------------- Google Maps (needs API key) ---------------- */
