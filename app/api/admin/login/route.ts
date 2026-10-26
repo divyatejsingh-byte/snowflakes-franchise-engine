@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   }
   const res = NextResponse.json({ ok: true });
   res.cookies.set(ADMIN_COOKIE, await sessionToken(), {
-    httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 12,
+    httpOnly: true, sameSite: "lax", path: "/", secure: process.env.NODE_ENV === "production", // session cookie: signing in is needed again after the browser is closed
   });
   return res;
 }
