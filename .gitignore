@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets: never commit
+.env
+.env.*
+!.env.example
+
+# vercel / neon local state
+.vercel/
+.neon/
+
+# local tooling
+.claude/
+npm-debug.log*
+.DS_Store

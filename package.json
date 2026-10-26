@@ -1,0 +1,42 @@
+{
+  "name": "franchise-engine",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "sample": "tsx scripts/make-sample.ts",
+    "test:engine": "tsx scripts/test-engine.ts",
+    "test:parser": "tsx scripts/test-parser.ts",
+    "test:guardrails": "tsx scripts/test-guardrails.ts",
+    "test:chat-live": "tsx scripts/test-chat-live.ts"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.4",
+    "@neon/env": "^1.6.5",
+    "@neondatabase/serverless": "^1.2.0",
+    "@react-google-maps/api": "^2.19.3",
+    "@types/leaflet": "^1.9.22",
+    "clsx": "^2.1.1",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.400.0",
+    "next": "14.2.15",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-leaflet": "^4.2.1",
+    "resend": "^3.5.0",
+    "xlsx": "^0.18.5",
+    "zustand": "^4.5.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.39",
+    "tailwindcss": "^3.4.6",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.3"
+  }
+}
