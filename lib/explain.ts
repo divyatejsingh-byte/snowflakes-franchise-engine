@@ -13,6 +13,7 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 /** Plain-language auditor: resolves "Why is APP-007 on hold?" style questions against live engine results. */
 export function answerQuery(q: string, results: Result[]): Answer {
   const text = q.trim();
+  if (!results.length) return { kind: "help", title: "No data loaded", text: "No applications are loaded yet, so there is nothing to explain. Upload a workbook on the Upload tab (or wait for candidate submissions) and ask again." };
   if (!text) return { kind: "help", title: "Ask a question", text: 'Try "Why is [application ID] on hold?"' };
 
   const idMatch = text.match(/app[\s_-]*0*(\d+)/i) || text.match(/\b0*(\d{1,4})\b/);
