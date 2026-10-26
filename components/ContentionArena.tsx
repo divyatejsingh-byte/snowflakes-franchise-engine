@@ -51,7 +51,7 @@ export default function ContentionArena({
       </div>
 
       {!contests.length ? (
-        <p className="p-10 text-center text-slate-500">No contention right now — every pin code and territory has a single contender.</p>
+        <p className="p-10 text-center text-slate-500">{results.length ? "No contention right now — every pin code and territory has a single contender." : "No applicant data is loaded, so there is nothing to compare. Upload a workbook (or load the labelled demo data) first."}</p>
       ) : (
         <div className="grid flex-1 overflow-hidden lg:grid-cols-[280px_1fr]">
           <ul className="overflow-y-auto border-r border-slate-200 bg-slate-50 p-3">

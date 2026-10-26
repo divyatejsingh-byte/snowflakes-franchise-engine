@@ -141,8 +141,9 @@ export const useStore = create<State>()(
       },
     }),
     {
-      name: "franchise-engine-v4",
-      storage: createJSONStorage(() => localStorage),
+      name: "franchise-engine-v5",
+      // session-only: closing the tab starts from an empty app, so data from an earlier visit is never reused
+      storage: createJSONStorage(() => sessionStorage),
       skipHydration: true,
       partialize: (s) => ({ applications: s.applications, territories: s.territories, stores: s.stores, source: s.source, warnings: s.warnings, decisions: s.decisions, history: s.history }),
     },
