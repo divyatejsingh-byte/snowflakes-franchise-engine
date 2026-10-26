@@ -37,7 +37,6 @@ export default function LoginForm({ demoHint, open }: { demoHint: { user: string
         {err && <p className="text-sm font-medium text-rose-600">{err}</p>}
         <button className="btn w-full" disabled={busy || !username || !password}>{busy && <Loader2 size={16} className="animate-spin" />} Sign in</button>
         {demoHint && <p className="rounded-lg bg-slate-50 p-2 text-xs text-slate-500">Demo login prefilled — username <b>{demoHint.user}</b>, password <b>{demoHint.password}</b>. Set ADMIN_USERNAME / ADMIN_PASSWORD to use your own.</p>}
-        <p className="text-center text-xs text-slate-400">Want to open a SnowFlakes parlour? <a className="text-brand-600 hover:underline" href="/apply">Start your application</a></p>
       </form>
     </div>
   );

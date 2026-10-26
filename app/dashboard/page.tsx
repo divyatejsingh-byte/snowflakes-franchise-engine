@@ -69,9 +69,9 @@ export default function Dashboard() {
       {arena !== undefined && <ContentionArena results={results} initial={arena} onClose={() => setArena(undefined)} />}
       <ChatbotWidget
         copilot={{
-          title: "SnowFlakes Expansion Copilot", subtitle: "Ask about any applicant or describe a change", triggerLabel: "Expansion Copilot", triggerSub: "Why is APP-007 on hold?",
-          greeting: "Hi! I'm your Expansion Copilot. Ask \"Why is APP-007 on hold?\", \"which applications are waitlisted?\", or tell me new facts like \"APP-012 has now found a ground-floor space\" and I'll refresh the AI suggestion on the spot (final decisions stay with you).",
-          pills: ["Why is APP-007 on hold?", "Why is APP-002 waitlisted?", "Which applications are on hold?", "APP-012 has now found a ground-floor space"],
+          title: "SnowFlakes Expansion Copilot", subtitle: "Ask about any applicant or describe a change", triggerLabel: "Expansion Copilot", triggerSub: "Why is an application on hold?",
+          greeting: "Hi! I'm your Expansion Copilot. Ask \"Why is [application ID] on hold?\", \"which applications are waitlisted?\", or give me new facts about an applicant, such as a newly found ground-floor space, and I'll refresh the AI suggestion on the spot (final decisions stay with you).",
+          pills: ["Which applications are on hold?", "Which applications are waitlisted?", "Which applications are accepted?"],
           answer: (q) => {
             if (isInjection(q)) return { reply: "I can only help with the applications loaded here: explaining decisions, listing statuses, or recalculating a change you give me. I can't change how I work. 🍦" };
             const mut = parseMutation(q);
@@ -123,7 +123,7 @@ export default function Dashboard() {
 
 /* ------------------------------ Upload ------------------------------ */
 function UploadTab({ onDone }: { onDone: () => void }) {
-  const { loadDataset, resetSample, source, warnings } = useStore();
+  const { loadDataset, clearData, source, warnings } = useStore();
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -166,8 +166,8 @@ function UploadTab({ onDone }: { onDone: () => void }) {
         <p className="font-semibold">Current data</p>
         <p className="text-slate-600">{source}</p>
         <div className="flex flex-wrap gap-2">
-          <a className="btn-ghost" href="/Case1_Franchise_Test_Data_Format.xlsx" download><Download size={14} /> Sample .xlsx</a>
-          <button className="btn-ghost" onClick={() => { resetSample(); onDone(); }}><RotateCcw size={14} /> Reset to sample</button>
+          <a className="btn-ghost" href="/Franchise_Upload_Template.xlsx" download><Download size={14} /> Blank template</a>
+          <button className="btn-ghost" onClick={() => { if (window.confirm("Clear all applications, decisions and edits from this browser?")) clearData(); }}><RotateCcw size={14} /> Clear all data</button>
         </div>
         {warnings.length > 0 && (
           <div className="rounded-lg bg-amber-50 p-3 text-amber-800">

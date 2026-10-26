@@ -4,19 +4,17 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { useMemo } from "react";
 import { applyPatch, cascadeBetween, evaluate } from "./engine";
 import { assess } from "./rubric";
-import { APP_HEADERS, SAMPLE_APPS, SAMPLE_STORES, SAMPLE_TERRITORIES, STORE_HEADERS, TERR_HEADERS } from "./sample";
-import { parseWorkbook } from "./parser";
-import * as XLSX from "xlsx";
+import { FIXED_STORES } from "./sample";
 import type { Application, Dataset } from "./types";
 
-/** Build the sample dataset by round-tripping through the real parser (same code path as an upload). */
-export function sampleDataset(): Dataset {
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([APP_HEADERS, ...SAMPLE_APPS]), "Applications");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([TERR_HEADERS, ...SAMPLE_TERRITORIES]), "Territories");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([STORE_HEADERS, ...SAMPLE_STORES]), "Existing stores");
-  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" }) as ArrayBuffer;
-  return parseWorkbook(buf).data;
+/** The app ships with no applicants and no territories: those arrive only from an uploaded workbook or from /apply.
+ *  Only Sheet 3 (the brand's 10 existing stores) is built in, because the brief fixes it. */
+export function emptyDataset(): Dataset {
+  return {
+    applications: [],
+    territories: [],
+    stores: FIXED_STORES.map((r) => ({ id: String(r[0]), city: String(r[1]), pin: String(r[2]), opened: String(r[3]) })),
+  };
 }
 
 export interface LedgerEntry { id: number; at: string; kind: "ingest" | "rule" | "mutation" | "cascade" | "dispatch" | "submit" | "decision"; text: string }
@@ -60,7 +58,7 @@ interface State extends Dataset {
   source: string;
   warnings: string[];
   loadDataset: (d: Dataset, source: string, warnings?: string[]) => void;
-  resetSample: () => void;
+  clearData: () => void;
   addApplication: (a: Omit<Application, "id">) => string;
   patchApplication: (id: string, patch: Partial<Application>, by?: string) => void;
 }
@@ -73,8 +71,8 @@ const nextId = (apps: Application[]) => {
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
-      ...sampleDataset(),
-      source: "Built-in sample data",
+      ...emptyDataset(),
+      source: "No data loaded yet",
       warnings: [],
       ledger: [],
       decisions: {},
@@ -100,9 +98,9 @@ export const useStore = create<State>()(
       loadDataset: (d, source, warnings = []) => {
         set({ ...d, source, warnings, decisions: {}, history: {}, ledger: [...get().ledger, entry("ingest", `File ingested: ${d.applications.length} applications, ${d.territories.length} territories, ${d.stores.length} existing stores loaded from ${source}.`), ...ruleEntries(d)].slice(-300) });
       },
-      resetSample: () => {
-        const d = sampleDataset();
-        set({ ...d, source: "Built-in sample data", warnings: [], decisions: {}, history: {}, ledger: [...get().ledger, entry("ingest", "Reset to the built-in sample dataset."), ...ruleEntries(d)].slice(-300) });
+      clearData: () => {
+        const d = emptyDataset();
+        set({ ...d, source: "No data loaded yet", warnings: [], decisions: {}, history: {}, ledger: [...get().ledger, entry("ingest", "All applications, decisions and edits were cleared.")].slice(-300) });
       },
       addApplication: (a) => {
         const id = nextId(get().applications);
@@ -137,7 +135,7 @@ export const useStore = create<State>()(
       },
     }),
     {
-      name: "franchise-engine-v3",
+      name: "franchise-engine-v4",
       storage: createJSONStorage(() => localStorage),
       skipHydration: true,
       partialize: (s) => ({ applications: s.applications, territories: s.territories, stores: s.stores, source: s.source, warnings: s.warnings, decisions: s.decisions, history: s.history }),

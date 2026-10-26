@@ -13,7 +13,7 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
 /** Plain-language auditor: resolves "Why is APP-007 on hold?" style questions against live engine results. */
 export function answerQuery(q: string, results: Result[]): Answer {
   const text = q.trim();
-  if (!text) return { kind: "help", title: "Ask a question", text: 'Try "Why is APP-007 on hold?"' };
+  if (!text) return { kind: "help", title: "Ask a question", text: 'Try "Why is [application ID] on hold?"' };
 
   const idMatch = text.match(/app[\s_-]*0*(\d+)/i) || text.match(/\b0*(\d{1,4})\b/);
   if (idMatch) {
@@ -41,8 +41,8 @@ export function answerQuery(q: string, results: Result[]): Answer {
     };
   }
   const onTopic = /app-?\d|applic|status|on hold|waitlist|reject|accept|score|territor|slot|\bpin\b|\bstores?\b|payback|floor|launch|cannibal|bottleneck/i.test(t);
-  if (!onTopic) return { kind: "help", title: "Sorry, I can't help with that one", text: "Aw, I wish I could help with that one! 🍦 It's outside what I can answer. I can explain any application's decision (try “Why is APP-007 on hold?”), list applications by status, or recalculate a change like “APP-012 has now found a ground-floor space of 450 sq ft”." };
-  return { kind: "help", title: "I didn't catch an application", text: 'Mention an application ID, e.g. "Why is APP-007 on hold?", or ask "which applications are waitlisted?".' };
+  if (!onTopic) return { kind: "help", title: "Sorry, I can't help with that one", text: "Aw, I wish I could help with that one! 🍦 It's outside what I can answer. I can explain any application's decision (try “Why is [application ID] on hold?”), list applications by status, or recalculate a change like “[application ID] has now found a ground-floor space of 450 sq ft”." };
+  return { kind: "help", title: "I didn't catch an application", text: 'Mention an application ID, e.g. "Why is [application ID] on hold?", or ask "which applications are waitlisted?".' };
 }
 
 /** Detects "APP-012 has now found a ground-floor space of 450 sq ft" style state changes. */

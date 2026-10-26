@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { APP_HEADERS, SAMPLE_APPS, SAMPLE_STORES, SAMPLE_TERRITORIES, STORE_HEADERS, TERR_HEADERS } from "../lib/sample";
+import { APP_HEADERS, SAMPLE_APPS, SAMPLE_STORES, SAMPLE_TERRITORIES, STORE_HEADERS, TERR_HEADERS } from "./fixtures";
 import { parseWorkbook } from "../lib/parser";
 import { evaluate } from "../lib/engine";
 

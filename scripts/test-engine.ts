@@ -5,7 +5,7 @@ import { parseWorkbook } from "../lib/parser";
 import { answerQuery } from "../lib/explain";
 
 import { checkPin } from "../lib/allowed";
-const buf = readFileSync("public/Case1_Franchise_Test_Data_Format.xlsx");
+const buf = readFileSync("scripts/fixtures/test-workbook.xlsx");
 const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
 const { data, warnings } = parseWorkbook(ab);
 console.log("parsed", data.applications.length, "apps,", data.territories.length, "territories,", data.stores.length, "stores; warnings:", warnings);
