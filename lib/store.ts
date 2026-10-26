@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { applyPatch, cascadeBetween, evaluate } from "./engine";
 import { assess } from "./rubric";
 import { FIXED_STORES } from "./sample";
+import { DEMO_SOURCE, demoDataset } from "./demo";
 import type { Application, Dataset } from "./types";
 
 /** The app ships with no applicants and no territories: those arrive only from an uploaded workbook or from /apply.
@@ -38,7 +39,7 @@ function ruleEntries(ds: Dataset): LedgerEntry[] {
   return out;
 }
 
-export interface Change { at: string; by: string; field: string; from: string; to: string }
+export interface Change { at: string; by: string; field: string; from: string; to: string; effect?: string }
 const FIELD_LABEL: Record<string, string> = { name: "Applicant name", email: "Email", city: "City", pin: "Pin code", investment: "Investment (₹ lakh)", experience: "Experience (years)", business: "Business", space: "Space available", size: "Space size (sq ft)", floor: "Floor", launch: "Target launch (months)", language: "Language", notes: "Notes" };
 const show = (v: unknown) => (v === null || v === undefined || v === "" ? "(blank)" : String(v));
 
@@ -59,6 +60,7 @@ interface State extends Dataset {
   warnings: string[];
   loadDataset: (d: Dataset, source: string, warnings?: string[]) => void;
   clearData: () => void;
+  loadDemo: () => void;
   addApplication: (a: Omit<Application, "id">) => string;
   patchApplication: (id: string, patch: Partial<Application>, by?: string) => void;
 }
@@ -102,6 +104,10 @@ export const useStore = create<State>()(
         const d = emptyDataset();
         set({ ...d, source: "No data loaded yet", warnings: [], decisions: {}, history: {}, ledger: [...get().ledger, entry("ingest", "All applications, decisions and edits were cleared.")].slice(-300) });
       },
+      loadDemo: () => {
+        const d = demoDataset();
+        set({ ...d, source: DEMO_SOURCE, warnings: [], decisions: {}, history: {}, ledger: [...get().ledger, entry("ingest", "DEMO DATA loaded: fictional applicants for demonstration, not real people."), ...ruleEntries(d)].slice(-300) });
+      },
       addApplication: (a) => {
         const id = nextId(get().applications);
         const before = { applications: get().applications, territories: get().territories, stores: get().stores };
@@ -122,7 +128,7 @@ export const useStore = create<State>()(
         const lines = [entry("mutation", `Mutation applied by ${by}: ${id} ${what}.`)];
         const oldApp = get().applications.find((a) => a.id === id), newApp = apps.find((a) => a.id === id);
         const changes: Change[] = [];
-        if (oldApp && newApp) for (const k of Object.keys(FIELD_LABEL) as (keyof Application)[]) if (show(oldApp[k]) !== show(newApp[k])) changes.push({ at: new Date().toISOString(), by, field: FIELD_LABEL[k], from: show(oldApp[k]), to: show(newApp[k]) });
+        if (oldApp && newApp) for (const k of Object.keys(FIELD_LABEL) as (keyof Application)[]) if (show(oldApp[k]) !== show(newApp[k])) changes.push({ at: new Date().toISOString(), by, field: FIELD_LABEL[k], from: show(oldApp[k]), to: show(newApp[k]), effect: rb && rn ? `Score ${rb.score ?? "—"} → ${rn.score ?? "—"}; ${rb.label} → ${rn.label}` : undefined });
         if (rb && rn) lines.push(entry("mutation", `${id}: score ${rb.score ?? "—"} → ${rn.score ?? "—"}; ${rb.label} → ${rn.label}.`));
         for (const c of cascadeBetween(b, n)) lines.push(entry("cascade", `Slot cascade: ${c.promotedAppId} promoted to ACCEPTED${c.displacedAppId ? `; ${c.displacedAppId} moved to WAITLISTED` : ""} in ${c.territoryId} (slot #${c.slotNumber}).`));
         for (const r of n) {

@@ -17,7 +17,7 @@ import { findContests } from "@/lib/contention";
 import FranchiseMap from "@/components/FranchiseMap";
 import { Delta, StatusBadge } from "@/components/ui";
 import { simulate, summarize, type Delta as DeltaT } from "@/lib/engine";
-import { COPILOT_SCOPE_REPLY, answerQuery, inCopilotScope, parseMutation, patchProblem, type Answer } from "@/lib/explain";
+import { COPILOT_SCOPE_REPLY, DEMO_SCENARIO_REPLY, answerQuery, explainChanges, isChangesQuestion, inCopilotScope, parseMutation, patchProblem, type Answer } from "@/lib/explain";
 import { isInjection } from "@/lib/guardrails";
 import { parseWorkbook } from "@/lib/parser";
 import { useResults, useStore } from "@/lib/store";
@@ -35,6 +35,9 @@ export default function Dashboard() {
   const [arena, setArena] = useState<{ a: string; b: string } | null | undefined>(undefined); // undefined = closed
   const { results, dataset } = useResults();
   const patchApplication = useStore((s) => s.patchApplication);
+  const source = useStore((s) => s.source);
+  const loadDemo = useStore((s) => s.loadDemo);
+  const history = useStore((s) => s.history);
   const decisions = useStore((s) => s.decisions);
 
   useEffect(() => {
@@ -63,6 +66,12 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {source.startsWith("DEMO") && (
+        <p className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-900" role="status">
+          <span className="rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-white">Demo data</span>
+          You are looking at fictional applicants for demonstration, not real people. Upload a workbook or use "Clear all data" to work with real applications.
+        </p>
+      )}
       {tab === "upload" && <UploadTab onDone={() => setTab("pipeline")} />}
       {tab === "pipeline" && <PipelineTab results={results} onSelect={setSelected} />}
 
@@ -75,6 +84,8 @@ export default function Dashboard() {
           answer: (q) => {
             if (isInjection(q)) return { reply: "I can only help with the applications loaded here: explaining decisions, listing statuses, or recalculating a change you give me. I can't change how I work. 🍦" };
             if (!inCopilotScope(q)) return { reply: COPILOT_SCOPE_REPLY };
+            if (!results.length) return { reply: DEMO_SCENARIO_REPLY, actions: [{ label: "Load demo data (fictional)", patch: { __demo: "1" } }] };
+            if (isChangesQuestion(q)) return { reply: explainChanges(q, history, decisions, results) };
             const mut = parseMutation(q);
             if (mut) {
               const problem = patchProblem(mut.patch);
@@ -98,7 +109,7 @@ export default function Dashboard() {
             return { reply: `${a.text}${a.result?.bottlenecks.length ? " Fixes: " + a.result.bottlenecks.slice(0, 2).map((b) => b.fix).join(" • ") : ""}` };
           },
         }}
-        onApplyPreset={(patch) => { if (patch.__commit) { const c = JSON.parse(patch.__commit); patchApplication(c.id, c.patch, "Copilot (undo)"); setTab("pipeline"); setSelected(c.id); } }}
+        onApplyPreset={(patch) => { if (patch.__demo) { loadDemo(); setTab("pipeline"); return; } if (patch.__commit) { const c = JSON.parse(patch.__commit); patchApplication(c.id, c.patch, "Copilot (undo)"); setTab("pipeline"); setSelected(c.id); } }}
       />
       {dispatchOpen && <ApprovalsModal results={results} onClose={() => setDispatchOpen(false)} />}
       <EventLedger />
@@ -124,7 +135,7 @@ export default function Dashboard() {
 
 /* ------------------------------ Upload ------------------------------ */
 function UploadTab({ onDone }: { onDone: () => void }) {
-  const { loadDataset, clearData, source, warnings } = useStore();
+  const { loadDataset, clearData, loadDemo, source, warnings } = useStore();
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -168,6 +179,7 @@ function UploadTab({ onDone }: { onDone: () => void }) {
         <p className="text-slate-600">{source}</p>
         <div className="flex flex-wrap gap-2">
           <a className="btn-ghost" href="/Franchise_Upload_Template.xlsx" download><Download size={14} /> Blank template</a>
+          <button className="btn-ghost !border-amber-300 !text-amber-800" onClick={() => { loadDemo(); onDone(); }}><Sparkles size={14} /> Load demo data</button>
           <button className="btn-ghost" onClick={() => { if (window.confirm("Clear all applications, decisions and edits from this browser?")) clearData(); }}><RotateCcw size={14} /> Clear all data</button>
         </div>
         {warnings.length > 0 && (

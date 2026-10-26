@@ -101,7 +101,7 @@ export default function ChatbotWidget({
             {msgs.map((m, i) => (
               <div key={i} className={clsx("flex", m.role === "user" ? "justify-end" : "justify-start")}>
                 <div className={clsx("max-w-[88%] rounded-2xl px-3 py-2 text-sm leading-relaxed", m.role === "user" ? "bg-brand-600 text-white" : "bg-white text-slate-800 shadow-sm ring-1 ring-slate-200")}>
-                  <p>{m.text}</p>
+                  <p className="whitespace-pre-line">{m.text}</p>
                   {m.ai && <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-brand-600">✨ {m.ai === "gemini" ? "Gemini" : m.ai}</p>}
                   {m.actions && m.actions.length > 0 && (
                     <div className="mt-2 flex flex-col gap-1.5">

@@ -42,7 +42,7 @@ export default function ApprovalsModal({ results, onClose, focusId }: { results:
       const res = await fetch("/api/congratulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ result: r, to: email, approval: metaOf(r), outcome: out }) });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error || "Could not send.");
-      setState((s) => ({ ...s, [r.app.id]: { st: "sent", note: j.mode === "resend" ? `Sent to ${email}.` : "Email delivery isn't switched on, so this was simulated." } }));
+      setState((s) => ({ ...s, [r.app.id]: { st: "sent", note: j.mode === "resend" ? `Sent to ${email}.` : `Not delivered: ${j.note ?? "email delivery isn't switched on"}. The email above is exactly what would be sent.` } }));
       log("dispatch", `${out === "ACCEPTED" ? "Congratulations" : LABEL[out] + " update"} email ${j.mode === "resend" ? "sent" : "simulated"}: ${r.app.id} ${r.app.name} → ${email}.`);
     } catch (e) {
       setState((s) => ({ ...s, [r.app.id]: { st: "error", note: (e as Error).message } }));

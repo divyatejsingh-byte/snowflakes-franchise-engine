@@ -6,7 +6,7 @@ import "./globals.css";
 import Hydrator from "@/components/Hydrator";
 import SnowFall from "@/components/SnowFall";
 import Logo from "@/components/Logo";
-import LogoutButton from "@/components/LogoutButton";
+import NavLinks from "@/components/NavLinks";
 import { ADMIN_COOKIE, authRequired, isAdminCookie } from "@/lib/adminAuth";
 
 const display = Fredoka({ subsets: ["latin"], variable: "--font-display", display: "swap" });
@@ -30,19 +30,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <header className="sticky top-0 z-30 border-b border-ice-200 bg-white/90 backdrop-blur">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-2 gap-y-1 px-4 py-2.5">
             <Link href="/" aria-label="SnowFlakes home"><Logo size={40} /></Link>
-            <nav className="flex flex-wrap items-center justify-end gap-1 text-xs font-bold sm:text-sm">
-              <Link href="/" className="hidden rounded-full px-3 py-2 text-brand-900 hover:bg-brand-50 md:block">Home</Link>
-              <Link href="/apply" className="whitespace-nowrap rounded-full bg-brand-600 px-3 py-2 text-white sm:px-4 shadow-md shadow-brand-600/20 hover:bg-brand-700">Apply<span className="hidden sm:inline"> for our franchise</span></Link>
-              <Link href="/enquiry" className="rounded-full px-3 py-2 text-brand-900 hover:bg-brand-50">Enquiry</Link>
-              {required && !admin ? (
-                <Link href="/admin-login" className="rounded-full px-3 py-2 text-brand-900 hover:bg-brand-50">Admin login</Link>
-              ) : (
-                <>
-                  <Link href="/dashboard" className="rounded-full px-3 py-2 text-brand-900 hover:bg-brand-50">Dashboard</Link>
-                  {required && <LogoutButton />}
-                </>
-              )}
-            </nav>
+            <NavLinks admin={admin} required={required} />
           </div>
         </header>
         <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>

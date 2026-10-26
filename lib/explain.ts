@@ -88,7 +88,7 @@ export function patchProblem(patch: Partial<Application>): string | null {
 export const COPILOT_SCOPE_REPLY = "I'm the Expansion Copilot, so I only work with the applications loaded in this dashboard: explaining a decision, listing applications by status, and recalculating when you give me new facts about an applicant. 🍦 Candidate questions about how to apply or fill in the form are answered by the Application Copilot on the public site.";
 
 /** In scope = about loaded applications, their decisions, territories, scores or a change to one of them. */
-const COPILOT_IN = /app[\s_-]*0*\d+|applicants?|applications?|candidates?|status|on hold|waitlist|reject|accept|approv|decision|score|rank|territor|slot|payback|bottleneck|cannibal|contention|why is|why was|summar|how many/i;
+const COPILOT_IN = /app[\s_-]*0*\d+|applicants?|applications?|candidates?|status|on hold|waitlist|reject|accept|approv|decision|score|rank|territor|slot|payback|bottleneck|cannibal|contention|why is|why was|summar|how many|chang(e|es|ed)|edit|histor|undo/i;
 /** Things a candidate would ask: these belong to the Application Copilot. */
 const CANDIDATE_STYLE = /\bhow (do|can|should|would) i\b|\bcan i (apply|open|start|join)\b|\bmy (application|budget|shop|score|chances|status|form)\b|\bi (want|would like|am planning|plan) to (open|apply|start|join)\b|\bwhat (is|are) the (minimum|starting|required)\b/i;
 export function inCopilotScope(q: string): boolean {
@@ -96,4 +96,28 @@ export function inCopilotScope(q: string): boolean {
   if (!t) return true;
   if (CANDIDATE_STYLE.test(t) && !/app[\s_-]*0*\d+/i.test(t)) return false;
   return COPILOT_IN.test(t);
+}
+
+export const DEMO_SCENARIO_REPLY = "Nothing is uploaded yet, so I have no applications to explain, and I won't use anything from before. Here is a demo scenario you can try:\n1) Press \"Load demo data\" (it is clearly marked as fictional applicants).\n2) Ask: Why is APP-007 on hold? I will give every reason from the rubric.\n3) Say: APP-012 has now found a ground-floor space of 450 sq ft. I will re-score, show who gains or loses a slot, and open the decision box.\n4) Ask: What changed for APP-012? I will list each edit, who made it and its effect on the score.";
+
+const CHANGES_Q = /\b(what|which|show|list|explain|summari[sz]e|tell)\b.{0,30}\b(chang(e|es|ed)|edit(s|ed)?|updat(e|es|ed)|histor(y)?|modif(y|ied))\b|\bwhat changed\b|\brecent changes\b|\bchanges so far\b/i;
+export const isChangesQuestion = (q: string) => CHANGES_Q.test(q);
+
+interface HistoryRow { at: string; by: string; field: string; from: string; to: string; effect?: string }
+/** Explains every edit made since the data was loaded, from the stored change history and the human decisions. */
+export function explainChanges(q: string, history: Record<string, HistoryRow[]>, decisions: Record<string, { outcome: string; by: string; at: string; note: string; aiSuggested: string }>, results: Result[]): string {
+  const id = q.match(/app[\s_-]*0*(\d+)/i);
+  const want = id ? `APP-${id[1].padStart(3, "0")}` : null;
+  const ids = Array.from(new Set([...Object.keys(history), ...Object.keys(decisions)])).filter((x) => !want || x === want).sort();
+  if (want && !results.some((r) => r.app.id === want)) return `No application matching "${want}" exists in the loaded data.`;
+  if (!ids.length) return want ? `${want} has not been edited and has no human decision yet: its values are exactly as uploaded or submitted.` : "Nothing has been changed yet: every application still has the values it was uploaded or submitted with, and no human decisions are recorded.";
+  const when = (iso: string) => new Date(iso).toLocaleString("en-GB");
+  return ids.map((x) => {
+    const lines: string[] = [];
+    const rows = history[x] ?? [];
+    for (const c of rows) lines.push(`${c.field}: ${c.from} → ${c.to} (${c.by}, ${when(c.at)})${c.effect ? `. Effect: ${c.effect}` : ""}`);
+    const d = decisions[x];
+    if (d) lines.push(`Human decision: ${d.outcome.replace("_", " ")} by ${d.by} (${when(d.at)}); the AI had suggested ${d.aiSuggested.replace("_", " ")}${d.note ? `. Note: ${d.note}` : ""}`);
+    return `${x}\n- ${lines.join("\n- ")}`;
+  }).join("\n\n");
 }
